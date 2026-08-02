@@ -70,140 +70,156 @@ const Profile = () => {
 
   return (
     <Layout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Profile & Privacy Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Manage your account details and control your data.
-        </p>
+      <div className="flex items-center mb-2 mt-2 animate-slide-up">
+        <div className="bg-gradient-to-br from-primary-400 to-primary-600 p-2 rounded-xl mr-3 shadow-lg shadow-primary-500/30">
+          <User className="w-6 h-6 text-white" />
+        </div>
+        <h1 className="text-3xl font-black text-slate-800 tracking-tight">Profile & Privacy Settings</h1>
       </div>
+      <p className="text-base text-slate-500 mb-8 ml-11 animate-slide-up">
+        Manage your personal information, security preferences, and data privacy.
+      </p>
 
-      <div className="space-y-6 max-w-3xl">
-        <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
-          <div className="md:grid md:grid-cols-3 md:gap-6">
-            <div className="md:col-span-1">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">Personal Information</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Update your name and email address.
-              </p>
+      <div className="space-y-8 max-w-4xl animate-slide-up animate-delay-100">
+        {/* Personal Details Card */}
+        <div className="glass-card rounded-3xl p-6 md:p-8">
+          <div className="border-b border-slate-100/60 pb-4 mb-6">
+            <h3 className="text-xl font-black text-slate-800">Personal Information</h3>
+            <p className="text-sm font-medium text-slate-500 mt-1">
+              Update your account details and password.
+            </p>
+          </div>
+
+          {successMsg && (
+            <div className="mb-6 rounded-2xl bg-emerald-50 border border-emerald-200 p-4 animate-slide-up">
+              <div className="flex items-center">
+                <CheckCircle className="h-5 w-5 text-emerald-500 mr-3 shrink-0" />
+                <span className="text-sm font-bold text-emerald-800">{successMsg}</span>
+              </div>
             </div>
-            <div className="mt-5 md:col-span-2 md:mt-0">
-              
-              {successMsg && (
-                <div className="mb-4 rounded-md bg-green-50 p-4">
-                  <div className="flex">
-                    <CheckCircle className="h-5 w-5 text-green-400" />
-                    <div className="ml-3 text-sm font-medium text-green-800">{successMsg}</div>
-                  </div>
-                </div>
-              )}
-              {errorMsg && (
-                <div className="mb-4 rounded-md bg-red-50 p-4">
-                  <div className="flex">
-                    <AlertTriangle className="h-5 w-5 text-red-400" />
-                    <div className="ml-3 text-sm font-medium text-red-800">{errorMsg}</div>
-                  </div>
-                </div>
-              )}
+          )}
 
-              <form onSubmit={handleUpdate}>
-                <div className="grid grid-cols-6 gap-6">
-                  <div className="col-span-6 sm:col-span-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                        <User className="h-4 w-4" />
-                      </span>
-                      <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        value={name}
-                        onChange={onChange}
-                        className="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 focus:border-primary-500 focus:ring-primary-500 sm:text-sm border p-2"
-                      />
+          {errorMsg && (
+            <div className="mb-6 rounded-2xl bg-red-50 border border-red-200 p-4 animate-slide-up">
+              <div className="flex items-center">
+                <AlertTriangle className="h-5 w-5 text-red-500 mr-3 shrink-0" />
+                <span className="text-sm font-bold text-red-800">{errorMsg}</span>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleUpdate} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                  Full Name
+                </label>
+                <div className="flex rounded-2xl shadow-sm bg-white border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+                  <div className="flex items-center pl-4 bg-transparent">
+                    <User className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    value={name}
+                    onChange={onChange}
+                    className="flex-1 w-full border-none py-3 px-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 bg-transparent font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                  Email Address (Fixed)
+                </label>
+                <input
+                  type="email"
+                  disabled
+                  value={user?.email || ''}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-100/70 py-3 px-4 text-slate-500 font-medium cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100/60 pt-6 mt-6">
+              <h4 className="text-lg font-black text-slate-800 mb-1">Change Password</h4>
+              <p className="text-xs font-medium text-slate-400 mb-6">Leave blank if you don't wish to change your password.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                    New Password
+                  </label>
+                  <div className="flex rounded-2xl shadow-sm bg-white border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+                    <div className="flex items-center pl-4 bg-transparent">
+                      <Lock className="h-5 w-5 text-slate-400" />
                     </div>
-                  </div>
-
-                  <div className="col-span-6 sm:col-span-4">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email address (Cannot be changed)
-                    </label>
                     <input
-                      type="email"
-                      disabled
-                      value={user?.email || ''}
-                      className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 py-2 px-3 text-gray-500 shadow-sm sm:text-sm"
+                      type="password"
+                      name="password"
+                      id="password"
+                      value={password}
+                      onChange={onChange}
+                      placeholder="Min 6 characters"
+                      className="flex-1 w-full border-none py-3 px-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 bg-transparent font-medium"
                     />
                   </div>
+                </div>
 
-                  <div className="col-span-6 sm:col-span-4 border-t pt-6 mt-2">
-                    <h4 className="text-md font-medium text-gray-900 mb-4">Change Password</h4>
-                    
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                      New Password
-                    </label>
-                    <div className="mt-1 flex rounded-md shadow-sm mb-4">
-                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
-                        <Lock className="h-4 w-4" />
-                      </span>
-                      <input
-                        type="password"
-                        name="password"
-                        id="password"
-                        value={password}
-                        onChange={onChange}
-                        placeholder="Leave blank to keep current password"
-                        className="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 focus:border-primary-500 focus:ring-primary-500 sm:text-sm border p-2"
-                      />
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                    Confirm New Password
+                  </label>
+                  <div className="flex rounded-2xl shadow-sm bg-white border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+                    <div className="flex items-center pl-4 bg-transparent">
+                      <Lock className="h-5 w-5 text-slate-400" />
                     </div>
-
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                      Confirm New Password
-                    </label>
                     <input
                       type="password"
                       name="confirmPassword"
                       id="confirmPassword"
                       value={confirmPassword}
                       onChange={onChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm"
+                      placeholder="Repeat new password"
+                      className="flex-1 w-full border-none py-3 px-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 bg-transparent font-medium"
                     />
                   </div>
                 </div>
-                <div className="mt-6">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
-                  >
-                    {loading ? 'Saving...' : 'Save Profile'}
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="bg-white shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Privacy & Data Control</h3>
-            <div className="mt-2 max-w-xl text-sm text-gray-500">
-              <p>
-                MediGuide AI takes your privacy seriously. You can permanently delete your account and all associated symptom history data at any time.
-              </p>
-            </div>
-            <div className="mt-5">
+            <div className="pt-2">
               <button
-                type="button"
-                onClick={handleDeleteAccount}
-                className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:text-sm"
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-base font-bold text-white shadow-lg shadow-primary-500/30 transition-all hover:scale-[1.02] hover:shadow-primary-500/50 disabled:opacity-50"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Account
+                {loading ? 'Saving...' : 'Save Profile Changes'}
               </button>
             </div>
+          </form>
+        </div>
+
+        {/* Privacy Card */}
+        <div className="glass-card rounded-3xl p-6 md:p-8 border border-red-100 bg-red-50/30">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-xl font-black text-red-900">Privacy & Data Control</h3>
+              <p className="mt-2 text-sm font-medium text-slate-600 max-w-xl leading-relaxed">
+                MediGuide AI takes your medical data privacy seriously. You can permanently erase your profile along with all associated symptom reports and assessment history.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-md shadow-red-600/20 hover:bg-red-700 hover:shadow-lg transition-all"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Permanently Delete Account
+            </button>
           </div>
         </div>
       </div>
