@@ -263,112 +263,129 @@ const HealthcareFinder = () => {
             )}
           </div>
 
-          {/* Facilities List Panel */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <div>
-                <h3 className="text-lg font-black text-slate-800">Results</h3>
-                {searchOrigin && (
-                  <p className="text-xs text-slate-500 truncate max-w-[200px]">
-                    Within {radius} km of {searchOrigin.name}
-                  </p>
-                )}
+            {/* Facilities List Panel */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <div>
+                  <h3 className="text-lg font-black text-slate-800">
+                    {facilities.some(f => f.isNearestFallback) ? 'Nearest Healthcare Facilities' : 'Results'}
+                  </h3>
+                  {searchOrigin && (
+                    <p className="text-xs text-slate-500 truncate max-w-[220px]">
+                      {facilities.some(f => f.isNearestFallback) 
+                        ? `Closest to ${searchOrigin.name}`
+                        : `Within ${radius} km of ${searchOrigin.name}`}
+                    </p>
+                  )}
+                </div>
+                <span className="bg-primary-50 text-primary-700 text-xs font-bold px-3 py-1 rounded-full border border-primary-100">
+                  {facilities.length} found
+                </span>
               </div>
-              <span className="bg-primary-50 text-primary-700 text-xs font-bold px-3 py-1 rounded-full border border-primary-100">
-                {facilities.length} found
-              </span>
-            </div>
 
-            {facilities.length > 0 ? (
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                {facilities.map((facility) => (
-                  <div
-                    key={facility.id}
-                    onClick={() => setMapCenter([facility.latitude, facility.longitude])}
-                    className="p-5 rounded-2xl bg-white border border-slate-100 hover:border-primary-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <h4 className="text-base font-bold text-slate-800 group-hover:text-primary-600 transition-colors leading-snug">
-                          {facility.name}
-                        </h4>
-                        
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                          <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full capitalize">
-                            {facility.type}
-                          </span>
+              {facilities.some(f => f.isNearestFallback) && (
+                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs text-amber-800 flex items-start gap-2 animate-slide-up">
+                  <Compass className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>No facilities directly within {radius} km. Displaying the closest available facilities in the wider area.</span>
+                </div>
+              )}
+
+              {facilities.length > 0 ? (
+                <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                  {facilities.map((facility) => (
+                    <div
+                      key={facility.id}
+                      onClick={() => setMapCenter([facility.latitude, facility.longitude])}
+                      className="p-5 rounded-2xl bg-white border border-slate-100 hover:border-primary-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <h4 className="text-base font-bold text-slate-800 group-hover:text-primary-600 transition-colors leading-snug">
+                            {facility.name}
+                          </h4>
                           
-                          {facility.isRoadDistance ? (
-                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                              🚗 Road Distance
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full capitalize">
+                              {facility.type}
                             </span>
-                          ) : (
-                            <span className="text-[11px] font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full">
-                              Straight line
-                            </span>
+                            
+                            {facility.isRoadDistance ? (
+                              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                🚗 Road Route
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full">
+                                Straight line
+                              </span>
+                            )}
+
+                            {facility.isNearestFallback && (
+                              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                Closest Available
+                              </span>
+                            )}
+                          </div>
+
+                          {facility.estimatedDuration && (
+                            <div className="mt-2 inline-flex items-center text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-100">
+                              ⏱️ {facility.estimatedDuration} drive
+                            </div>
                           )}
+
+                          <p className="text-xs text-slate-500 mt-2.5 flex items-start leading-relaxed">
+                            <MapPin className="h-3.5 w-3.5 mr-1 text-primary-500 shrink-0 mt-0.5" />
+                            <span className="font-medium text-slate-600">{facility.address}</span>
+                          </p>
                         </div>
 
-                        {facility.estimatedDuration && (
-                          <div className="mt-2 inline-flex items-center text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-100">
-                            ⏱️ {facility.estimatedDuration} drive
-                          </div>
-                        )}
-
-                        <p className="text-xs text-slate-500 mt-2.5 flex items-start leading-relaxed">
-                          <MapPin className="h-3.5 w-3.5 mr-1 text-primary-500 shrink-0 mt-0.5" />
-                          <span className="font-medium text-slate-600">{facility.address}</span>
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col items-end shrink-0">
-                        <span className="text-xs font-black text-primary-700 bg-primary-50 border border-primary-100 px-2.5 py-1 rounded-xl shadow-xs">
-                          {facility.distance} km
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all mt-6" />
+                        <div className="flex flex-col items-end shrink-0">
+                          <span className="text-xs font-black text-primary-700 bg-primary-50 border border-primary-100 px-2.5 py-1 rounded-xl shadow-xs">
+                            {facility.distance} km
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all mt-6" />
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+              ) : !loading && (
+                <div className="text-center py-10 bg-white rounded-3xl border border-slate-100 p-6">
+                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-slate-400">
+                    <MapIcon className="w-6 h-6" />
                   </div>
-                ))}
-              </div>
-            ) : !loading && (
-              <div className="text-center py-10 bg-white rounded-3xl border border-slate-100 p-6">
-                <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-slate-400">
-                  <MapIcon className="w-6 h-6" />
+                  <h4 className="text-sm font-bold text-slate-700 mb-1">No facilities found</h4>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto mb-4">
+                    Could not locate facilities in this area. Try selecting a larger distance radius or changing facility type.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <button
+                      onClick={() => {
+                        setRadius(20);
+                        const params = { radius: 20, type };
+                        if (searchAddress.trim()) params.address = searchAddress.trim();
+                        else if (searchOrigin) { params.lat = searchOrigin.lat; params.lng = searchOrigin.lng; }
+                        fetchFacilities(params);
+                      }}
+                      className="px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs font-bold rounded-xl border border-primary-200 transition-colors"
+                    >
+                      Search 20 km
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRadius(30);
+                        const params = { radius: 30, type };
+                        if (searchAddress.trim()) params.address = searchAddress.trim();
+                        else if (searchOrigin) { params.lat = searchOrigin.lat; params.lng = searchOrigin.lng; }
+                        fetchFacilities(params);
+                      }}
+                      className="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold rounded-xl transition-colors"
+                    >
+                      Search 30 km
+                    </button>
+                  </div>
                 </div>
-                <h4 className="text-sm font-bold text-slate-700 mb-1">No facilities within {radius} km</h4>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto mb-4">
-                  No verified hospitals or clinics found within {radius} km road distance.
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  <button
-                    onClick={() => {
-                      setRadius(20);
-                      const params = { radius: 20, type };
-                      if (searchAddress.trim()) params.address = searchAddress.trim();
-                      else if (searchOrigin) { params.lat = searchOrigin.lat; params.lng = searchOrigin.lng; }
-                      fetchFacilities(params);
-                    }}
-                    className="px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs font-bold rounded-xl border border-primary-200 transition-colors"
-                  >
-                    Expand to 20 km
-                  </button>
-                  <button
-                    onClick={() => {
-                      setRadius(30);
-                      const params = { radius: 30, type };
-                      if (searchAddress.trim()) params.address = searchAddress.trim();
-                      else if (searchOrigin) { params.lat = searchOrigin.lat; params.lng = searchOrigin.lng; }
-                      fetchFacilities(params);
-                    }}
-                    className="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold rounded-xl transition-colors"
-                  >
-                    Expand to 30 km
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
         </div>
 
         {/* Map Panel */}

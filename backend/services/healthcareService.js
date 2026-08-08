@@ -115,10 +115,12 @@ class HealthcareService {
     return updatedFacilities;
   }
 
-  async findNearbyFacilities(lat, lng, radiusKm = 5, type = 'all') {
-    // Calculate bounding box for high-speed spatial R-Tree index in Overpass
-    const deltaLat = radiusKm / 111.0;
-    const deltaLng = radiusKm / (111.0 * Math.cos(lat * (Math.PI / 180)));
+  async findNearbyFacilities(lat, lng, radiusKm = 15, type = 'all') {
+    // Search with a bounding box buffer (at least 20 km or 1.5x requested radius)
+    // so we always capture nearby healthcare centers even in rural locations
+    const searchBufferKm = Math.max(radiusKm * 1.4, 25);
+    const deltaLat = searchBufferKm / 111.0;
+    const deltaLng = searchBufferKm / (111.0 * Math.cos(lat * (Math.PI / 180)));
 
     const south = (lat - deltaLat).toFixed(5);
     const west = (lng - deltaLng).toFixed(5);
@@ -211,11 +213,23 @@ class HealthcareService {
       // Calculate actual road driving distances via free OSRM Routing Machine
       facilities = await this.calculateRoadDistances(lat, lng, facilities);
 
-      // STRICT FILTER: Only include facilities within the user's chosen radius limit
-      const filteredFacilities = facilities.filter(f => f.distance <= radiusKm);
+      // Sort all facilities by road distance ascending
+      facilities.sort((a, b) => a.distance - b.distance);
 
-      // Sort by distance ascending
-      return filteredFacilities.sort((a, b) => a.distance - b.distance);
+      // Primary filter: facilities strictly within requested radius
+      const exactWithinRadius = facilities.filter(f => f.distance <= radiusKm);
+
+      // If facilities exist within the radius, return them.
+      // If 0 facilities are within the exact radius (e.g. remote rural locations),
+      // return the closest 12 facilities so the user is never left without vital healthcare options!
+      if (exactWithinRadius.length > 0) {
+        return exactWithinRadius;
+      } else {
+        return facilities.slice(0, 12).map(f => ({
+          ...f,
+          isNearestFallback: true
+        }));
+      }
     } catch (error) {
       console.error('Overpass API Error:', error.message);
       throw new Error('Failed to fetch nearby facilities from Overpass API');
