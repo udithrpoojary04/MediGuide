@@ -116,36 +116,46 @@ class HealthcareService {
   }
 
   async findNearbyFacilities(lat, lng, radiusKm = 5, type = 'all') {
-    // Build Overpass QL query
-    const radiusMeters = radiusKm * 1000;
+    // Calculate bounding box for high-speed spatial R-Tree index in Overpass
+    const deltaLat = radiusKm / 111.0;
+    const deltaLng = radiusKm / (111.0 * Math.cos(lat * (Math.PI / 180)));
+
+    const south = (lat - deltaLat).toFixed(5);
+    const west = (lng - deltaLng).toFixed(5);
+    const north = (lat + deltaLat).toFixed(5);
+    const east = (lng + deltaLng).toFixed(5);
     
-    let typeFilter = '';
+    let typeQuery = '';
     if (type === 'hospitals') {
-      typeFilter = `node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
-                    way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
-                    relation["amenity"="hospital"](around:${radiusMeters},${lat},${lng});`;
+      typeQuery = `node["amenity"="hospital"](${south},${west},${north},${east});
+                   way["amenity"="hospital"](${south},${west},${north},${east});`;
     } else if (type === 'clinics') {
-      typeFilter = `node["amenity"="clinic"](around:${radiusMeters},${lat},${lng});
-                    way["amenity"="clinic"](around:${radiusMeters},${lat},${lng});
-                    node["amenity"="doctors"](around:${radiusMeters},${lat},${lng});`;
+      typeQuery = `node["amenity"="clinic"](${south},${west},${north},${east});
+                   node["amenity"="doctors"](${south},${west},${north},${east});
+                   way["amenity"="clinic"](${south},${west},${north},${east});`;
     } else {
       // all
-      typeFilter = `node["amenity"~"hospital|clinic|doctors"](around:${radiusMeters},${lat},${lng});
-                    way["amenity"~"hospital|clinic"](around:${radiusMeters},${lat},${lng});`;
+      typeQuery = `node["amenity"="hospital"](${south},${west},${north},${east});
+                   node["amenity"="clinic"](${south},${west},${north},${east});
+                   node["amenity"="doctors"](${south},${west},${north},${east});
+                   way["amenity"="hospital"](${south},${west},${north},${east});
+                   way["amenity"="clinic"](${south},${west},${north},${east});`;
     }
 
     const query = `
-      [out:json][timeout:20];
+      [out:json][timeout:15];
       (
-        ${typeFilter}
+        ${typeQuery}
       );
       out center;
     `;
 
+    // Active, high-performance Overpass API mirror pool
     const overpassEndpoints = [
-      'https://overpass-api.de/api/interpreter',
+      'https://lz4.overpass-api.de/api/interpreter',
+      'https://z.overpass-api.de/api/interpreter',
       'https://overpass.kumi.systems/api/interpreter',
-      'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+      'https://overpass-api.de/api/interpreter'
     ];
 
     let response = null;
@@ -157,22 +167,22 @@ class HealthcareService {
           params: { data: query },
           headers: { 
             'Accept': 'application/json',
-            'User-Agent': 'MediGuideAI/1.0'
+            'User-Agent': 'MediGuideAI-Healthcare/1.0 (contact@mediguide.ai)'
           },
-          timeout: 15000
+          timeout: 10000
         });
         if (response?.data?.elements) {
           break; // successfully fetched
         }
       } catch (err) {
         lastError = err;
-        console.warn(`Overpass endpoint ${endpoint} failed (${err.message}), trying fallback...`);
+        console.warn(`Overpass endpoint ${endpoint} failed (${err.message}), trying next mirror...`);
       }
     }
 
     if (!response || !response.data) {
       console.error('All Overpass API Endpoints Failed:', lastError?.message);
-      throw new Error('Failed to fetch nearby facilities from Overpass API');
+      throw new Error('Healthcare service currently busy. Please try again in a few moments.');
     }
 
     try {
