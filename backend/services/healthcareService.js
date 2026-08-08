@@ -211,8 +211,11 @@ class HealthcareService {
       // Calculate actual road driving distances via free OSRM Routing Machine
       facilities = await this.calculateRoadDistances(lat, lng, facilities);
 
-      // Sort by distance (road distance when available, otherwise straight-line)
-      return facilities.sort((a, b) => a.distance - b.distance);
+      // STRICT FILTER: Only include facilities within the user's chosen radius limit
+      const filteredFacilities = facilities.filter(f => f.distance <= radiusKm);
+
+      // Sort by distance ascending
+      return filteredFacilities.sort((a, b) => a.distance - b.distance);
     } catch (error) {
       console.error('Overpass API Error:', error.message);
       throw new Error('Failed to fetch nearby facilities from Overpass API');
