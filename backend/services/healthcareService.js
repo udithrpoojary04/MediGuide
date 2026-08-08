@@ -210,16 +210,22 @@ class HealthcareService {
   }
 
   async geocodeAddress(address) {
+    if (!address || !address.trim()) return null;
+    const cleanAddress = address.trim();
+
+    // 1. Try Primary Nominatim
     try {
       const response = await axios.get(this.nominatimUrl, {
         params: {
-          q: address,
+          q: cleanAddress,
           format: 'json',
-          limit: 1
+          limit: 1,
+          addressdetails: 1
         },
         headers: {
-          'User-Agent': 'MediGuide AI App'
-        }
+          'User-Agent': 'MediGuideAI-Healthcare/1.0 (contact@mediguide.ai)'
+        },
+        timeout: 8000
       });
 
       if (response.data && response.data.length > 0) {
@@ -229,11 +235,58 @@ class HealthcareService {
           displayName: response.data[0].display_name
         };
       }
-      return null;
     } catch (error) {
-      console.error('Nominatim API Error:', error.message);
-      throw new Error('Failed to geocode address');
+      console.warn('Primary Nominatim Geocode Error:', error.message);
     }
+
+    // 2. Try Nominatim with region suffix if query is a single word
+    if (!cleanAddress.includes(',')) {
+      try {
+        const response = await axios.get(this.nominatimUrl, {
+          params: {
+            q: `${cleanAddress}, Karnataka, India`,
+            format: 'json',
+            limit: 1
+          },
+          headers: {
+            'User-Agent': 'MediGuideAI-Healthcare/1.0 (contact@mediguide.ai)'
+          },
+          timeout: 8000
+        });
+
+        if (response.data && response.data.length > 0) {
+          return {
+            lat: parseFloat(response.data[0].lat),
+            lng: parseFloat(response.data[0].lon),
+            displayName: response.data[0].display_name
+          };
+        }
+      } catch (error) {
+        console.warn('Suffix Nominatim Geocode Error:', error.message);
+      }
+    }
+
+    // 3. Try Photon Komoot OSM geocoder as fallback
+    try {
+      const response = await axios.get('https://photon.komoot.io/api/', {
+        params: { q: cleanAddress, limit: 1 },
+        timeout: 6000
+      });
+
+      if (response.data?.features?.length > 0) {
+        const feat = response.data.features[0];
+        const [lon, lat] = feat.geometry.coordinates;
+        return {
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
+          displayName: feat.properties.name || feat.properties.city || cleanAddress
+        };
+      }
+    } catch (error) {
+      console.warn('Photon Geocode Fallback Error:', error.message);
+    }
+
+    return null;
   }
 }
 

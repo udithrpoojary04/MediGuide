@@ -34,53 +34,72 @@ const HealthcareFinder = () => {
   const [type, setType] = useState('all');
   
   const [userLocation, setUserLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState([51.505, -0.09]);
+  const [mapCenter, setMapCenter] = useState([12.9141, 74.8560]); // Default to Indian region center instead of London
 
-  useEffect(() => {
+  const requestCurrentLocation = (autoSearch = false) => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
           setUserLocation(loc);
           setMapCenter([loc.lat, loc.lng]);
+          setSearchAddress('');
+          if (autoSearch) {
+            fetchFacilities({ lat: loc.lat, lng: loc.lng, radius, type });
+          }
         },
-        (err) => console.warn('Geolocation denied or unavailable', err)
+        (err) => {
+          console.warn('Geolocation denied or unavailable', err);
+          if (autoSearch) {
+            setError('Could not access device GPS location. Please allow location permissions or type an address.');
+          }
+        },
+        { timeout: 10000, enableHighAccuracy: true }
       );
     }
+  };
+
+  useEffect(() => {
+    requestCurrentLocation(false);
   }, []);
 
-  const handleSearch = async (e) => {
-    if (e) e.preventDefault();
+  const fetchFacilities = async (params) => {
     setLoading(true);
     setError('');
     
     try {
-      const params = { radius, type };
-      
-      if (searchAddress.trim()) {
-        params.address = searchAddress;
-      } else if (userLocation) {
-        params.lat = userLocation.lat;
-        params.lng = userLocation.lng;
-      } else {
-        setError('Please enter a location to search or enable geolocation.');
-        setLoading(false);
-        return;
-      }
-
       const response = await healthcareService.getNearbyFacilities(params);
       
       if (response.success) {
         setFacilities(response.data);
-        if (response.data.length > 0) {
+        if (response.searchCenter?.lat && response.searchCenter?.lng) {
+          setMapCenter([response.searchCenter.lat, response.searchCenter.lng]);
+        } else if (response.data.length > 0) {
           setMapCenter([response.data[0].latitude, response.data[0].longitude]);
         }
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to search for healthcare facilities');
+      setError(err.response?.data?.error || err.message || 'Failed to search for healthcare facilities');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async (e) => {
+    if (e) e.preventDefault();
+    
+    const params = { radius, type };
+    if (searchAddress.trim()) {
+      params.address = searchAddress.trim();
+    } else if (userLocation) {
+      params.lat = userLocation.lat;
+      params.lng = userLocation.lng;
+    } else {
+      setError('Please enter a location or click the GPS icon to use your current location.');
+      return;
+    }
+
+    fetchFacilities(params);
   };
 
   return (
@@ -110,20 +129,15 @@ const HealthcareFinder = () => {
                   <input
                     type="text"
                     className="flex-1 w-full border-none py-3 px-3 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0 bg-transparent font-medium"
-                    placeholder={userLocation ? "Using current location..." : "Enter city or address"}
+                    placeholder={userLocation && !searchAddress ? "Using current location..." : "Enter city or address"}
                     value={searchAddress}
                     onChange={(e) => setSearchAddress(e.target.value)}
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      if (userLocation) {
-                        setSearchAddress('');
-                        handleSearch();
-                      }
-                    }}
-                    className="flex items-center justify-center px-4 bg-slate-50 hover:bg-slate-100 border-l border-slate-200 text-slate-500 transition-colors"
-                    title="Use my location"
+                    onClick={() => requestCurrentLocation(true)}
+                    className="flex items-center justify-center px-4 bg-slate-50 hover:bg-slate-100 border-l border-slate-200 text-primary-600 hover:text-primary-700 transition-colors"
+                    title="Use GPS current location"
                   >
                     <Navigation className="h-4 w-4" />
                   </button>

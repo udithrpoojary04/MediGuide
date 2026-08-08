@@ -14,16 +14,20 @@ const getNearbyFacilities = async (req, res, next) => {
     if (address && (!lat || !lng)) {
       const geoResult = await healthcareService.geocodeAddress(address);
       if (!geoResult) {
-        res.status(404);
-        return next(new Error('Could not find location for the provided address'));
+        return res.status(404).json({
+          success: false,
+          error: `Could not find coordinates for "${address}". Try adding a city/state name (e.g. "${address}, Karnataka") or use your device GPS location.`
+        });
       }
       searchLat = geoResult.lat;
       searchLng = geoResult.lng;
     }
 
     if (!searchLat || !searchLng || isNaN(searchLat) || isNaN(searchLng)) {
-      res.status(400);
-      return next(new Error('Valid latitude and longitude or an address are required'));
+      return res.status(400).json({
+        success: false,
+        error: 'Valid latitude and longitude or an address are required'
+      });
     }
 
     const radiusKm = parseFloat(radius) || 5;
@@ -33,10 +37,18 @@ const getNearbyFacilities = async (req, res, next) => {
 
     res.json({
       success: true,
+      searchCenter: {
+        lat: searchLat,
+        lng: searchLng
+      },
       data: facilities
     });
   } catch (error) {
-    next(error);
+    console.error('Healthcare Controller Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Server error while fetching healthcare facilities'
+    });
   }
 };
 
