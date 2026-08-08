@@ -135,23 +135,47 @@ class HealthcareService {
     }
 
     const query = `
-      [out:json][timeout:25];
+      [out:json][timeout:20];
       (
         ${typeFilter}
       );
       out center;
     `;
 
-    try {
-      const response = await axios.get(this.overpassUrl, {
-        params: { data: query },
-        headers: { 
-          'Accept': 'application/json',
-          'User-Agent': 'MediGuideAI/1.0'
-        },
-        timeout: 25000
-      });
+    const overpassEndpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+    ];
 
+    let response = null;
+    let lastError = null;
+
+    for (const endpoint of overpassEndpoints) {
+      try {
+        response = await axios.get(endpoint, {
+          params: { data: query },
+          headers: { 
+            'Accept': 'application/json',
+            'User-Agent': 'MediGuideAI/1.0'
+          },
+          timeout: 15000
+        });
+        if (response?.data?.elements) {
+          break; // successfully fetched
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`Overpass endpoint ${endpoint} failed (${err.message}), trying fallback...`);
+      }
+    }
+
+    if (!response || !response.data) {
+      console.error('All Overpass API Endpoints Failed:', lastError?.message);
+      throw new Error('Failed to fetch nearby facilities from Overpass API');
+    }
+
+    try {
       const elements = response.data.elements || [];
       
       let facilities = elements.map(el => {
